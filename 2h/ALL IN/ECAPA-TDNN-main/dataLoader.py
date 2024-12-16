@@ -16,11 +16,19 @@ class train_loader(object):
 		self.noiselist = {}
 		augment_files   = glob.glob(os.path.join(musan_path,'*/*/*/*.wav'))
 		for file in augment_files:
-			if file.split('/')[-4] not in self.noiselist:
-				self.noiselist[file.split('/')[-4]] = []
-			self.noiselist[file.split('/')[-4]].append(file)
-		self.rir_files  = glob.glob(os.path.join(rir_path,'*/*/*.wav'))
-		# Load data & labels
+			key = os.path.normpath(file).split(os.sep)[-4]
+			if key not in self.noiselist:
+				self.noiselist[key] = []
+			self.noiselist[key].append(file)
+		print("Noise categories loaded:", self.noiselist.keys())
+		self.rir_files = glob.glob(os.path.join(rir_path, '*/*/*.wav'))
+		# 	if file.split('/')[-3] not in self.noiselist:
+		# 		self.noiselist[file.split('/')[-3]] = []
+		# 	self.noiselist[file.split('/')[-3]].append(file)
+		# self.rir_files  = glob.glob(os.path.join(rir_path,'*/*/*.wav'))
+		
+  
+  # Load data & labels
 		self.data_list  = []
 		self.data_label = []
 		lines = open(train_list).read().splitlines()
@@ -58,6 +66,7 @@ class train_loader(object):
 		elif augtype == 5: # Television noise
 			audio = self.add_noise(audio, 'speech')
 			audio = self.add_noise(audio, 'music')
+  
 		return torch.FloatTensor(audio[0]), self.data_label[index]
 
 	def __len__(self):
@@ -66,7 +75,7 @@ class train_loader(object):
 	def add_rev(self, audio):
 		rir_file    = random.choice(self.rir_files)
 		rir, sr     = soundfile.read(rir_file)
-		rir         = numpy.expand_dims(rir.astype(numpy.float),0)
+		rir         = numpy.expand_dims(rir.astype(float),0)
 		rir         = rir / numpy.sqrt(numpy.sum(rir**2))
 		return signal.convolve(audio, rir, mode='full')[:,:self.num_frames * 160 + 240]
 
